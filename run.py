@@ -4,18 +4,18 @@ import sys
 from lib.bot import Shelp
 
 try:
-	addr = sys.argv[1]
-	nick = sys.argv[2]
+    ADDR = sys.argv[1]
+    NICK = sys.argv[2]
 except IndexError:
-	print('usage: '+sys.argv[0]+' irc_server nickname [channel1] [channel2] ...')
-	exit()
+    print('usage: '+sys.argv[0]+' irc_server nickname [channel1] [channel2] ...')
+    exit()
 try:
-	addr = sys.argv[1].split(':',maxsplit=1)[0]
-	port = sys.argv[1].split(':',maxsplit=1)[1]
+    ADDR = sys.argv[1].split(':', maxsplit=1)[0]
+    PORT = sys.argv[1].split(':', maxsplit=1)[1]
 except:
-	port = 6667
+    PORT = 6667
 
-channels = sys.argv[2:]
+CHANNELS = sys.argv[2:]
 
-shelp = Shelp(addr,port,nick,channels)
+shelp = Shelp(ADDR, PORT, NICK, CHANNELS)
 shelp.start()

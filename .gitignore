@@ -59,6 +59,12 @@ instance/
 # Scrapy stuff:
 .scrapy
 
+# VSCode
+.vscode
+
+# macOS
+.DS_Store
+
 # Sphinx documentation
 docs/_build/
 
