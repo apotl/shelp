@@ -15,7 +15,6 @@ class IRCHandler(IRCBase):
 
     def __init__(self, coninfo):
         self.coninfo = coninfo
-        self._sock = coninfo['sock']
 
     def say(self, c, m):
         self._send('PRIVMSG '+c+' :'+m)
@@ -49,9 +48,12 @@ class IRCHandler(IRCBase):
 
 class Shelp(IRCBase):
     def __init__(self, addr, port, nick, channels):
+        
+        self._sock = None
+        self._addr = addr
+        self._port = port
+        self._nick = nick
 
-        self._sock = socket.socket()
-        self._sock.connect((addr, port))
         self._q = Queue()
 
         self._calling_error = None
@@ -64,21 +66,37 @@ class Shelp(IRCBase):
                 'port': port,
                 'nick': nick,
                 'channels': channels,
-
-                'sock': self._sock,
             })
+    
+    def _connect(self):
+        while 1:
+            try:
+                self._sock = socket.socket()
+                self._handler._sock = self._sock
 
-        self._send('USER '+nick+' 0 * :'+nick)
-        self._send('NICK '+nick)
+                self._sock.connect((self._addr, self._port))
+
+                self._send('USER '+self._nick+' 0 * :'+self._nick)
+                self._send('NICK '+self._nick)
+                print('Connected.')
+                break
+            except Exception as e:
+                if e[0] == socket.errno.ETIMEDOUT:
+                    sleep(10)
+                    print('Timeout, retrying...')
+                else:
+                    raise
 
     def start(self):
-        self._calling_error = False
+        while 1:
+            self._connect()
+            self._calling_error = False
 
-        self._call_handler_thread = Thread(target=self._call_handler)
-        self._listen_thread = Thread(target=self._listen)
+            self._call_handler_thread = Thread(target=self._call_handler)
+            self._listen_thread = Thread(target=self._listen)
 
-        self._call_handler_thread.start()
-        self._call_handler_thread.join()
+            self._call_handler_thread.start()
+            self._call_handler_thread.join()
 
     def _call_handler(self):
         self._listen_thread.start()

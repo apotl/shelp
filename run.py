@@ -18,4 +18,5 @@ except:
 CHANNELS = sys.argv[2:]
 
 shelp = Shelp(ADDR, PORT, NICK, CHANNELS)
+
 shelp.start()
