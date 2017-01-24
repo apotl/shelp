@@ -20,8 +20,6 @@ class IRCHandler(IRCBase):
             [getattr(getattr(shelpers,shelper), shelpclass) for shelpclass in dir(getattr(shelpers, shelper))
              if shelpclass != 'Shelper' or shelpclass[0] != '_'][0]()
             for shelper in dir(shelpers) if shelper[0] != '_']
-        for sh in self.shelpermods:
-            print(dir(sh))
 
     def say(self, c, m):
         self._send('PRIVMSG '+c+' :'+m)
@@ -53,8 +51,6 @@ class IRCHandler(IRCBase):
 
         for mod in self.shelpermods:
             msgs += mod.check(m)
-
-        print(msgs)
 
         for msg in msgs:
             self.say(dst, msg)
@@ -124,9 +120,7 @@ class Shelp(IRCBase):
                 sleep(1)
             except Exception as e:
                 self._calling_error = True
-                for dst in self._handler.coninfo['channels']:
-                    self._handler.say(dst, str(e))
-                break
+                raise
         self._listen_thread.join()
 
     def _listen(self):

@@ -8,6 +8,8 @@ class Shelper():
             raise NotImplementedError
         if re.match(self.REGEX, m) != None:
             return self.run(m)
+        else:
+            return []
 
     def run(self, m):
         raise NotImplementedError
