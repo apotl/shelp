@@ -3,6 +3,7 @@ from threading import Thread
 from time import sleep
 
 from lib.structs import Queue
+import shelpers
 
 class IRCBase():
     def __init__(self):
@@ -15,6 +16,12 @@ class IRCHandler(IRCBase):
 
     def __init__(self, coninfo):
         self.coninfo = coninfo
+        self.shelpermods = [
+            [getattr(getattr(shelpers,shelper), shelpclass) for shelpclass in dir(getattr(shelpers, shelper))
+             if shelpclass != 'Shelper' or shelpclass[0] != '_'][0]()
+            for shelper in dir(shelpers) if shelper[0] != '_']
+        for sh in self.shelpermods:
+            print(dir(sh))
 
     def say(self, c, m):
         self._send('PRIVMSG '+c+' :'+m)
@@ -41,6 +48,16 @@ class IRCHandler(IRCBase):
         srcnick = buf[0][1:buf[0].index('!')]
         m = ' '.join(buf[3:])[1:]
         dst = buf[2]
+
+        msgs = []
+
+        for mod in self.shelpermods:
+            msgs += mod.check(m)
+
+        print(msgs)
+
+        for msg in msgs:
+            self.say(dst, msg)
 
     def _on_invite(self, buf):
         self.coninfo['channels'] += [buf[3]]
