@@ -1,4 +1,5 @@
 import socket
+import ssl
 from threading import Thread
 from time import sleep
 
@@ -20,6 +21,7 @@ class IRCHandler(IRCBase):
             [getattr(getattr(shelpers,shelper), shelpclass) for shelpclass in dir(getattr(shelpers, shelper))
              if shelpclass != 'Shelper' or shelpclass[0] != '_'][0]()
             for shelper in dir(shelpers) if shelper[0] != '_']
+        print([dir(she) for she in self.shelpermods])
 
     def say(self, c, m):
         self._send('PRIVMSG '+c+' :'+m)
@@ -60,18 +62,23 @@ class IRCHandler(IRCBase):
         self._send('JOIN '+buf[3])
 
 class Shelp(IRCBase):
-    def __init__(self, addr, port, nick, channels):
-        
-        self._sock = None
+
+    _sock = None
+    _addr = None
+    _nick = None
+    _use_ssl = None
+
+    _q = Queue()
+
+    _calling_error = None
+    _call_handler_thread = None
+    _listen_thread = None
+
+    def __init__(self, addr, port, nick, channels, use_ssl=False):
         self._addr = addr
         self._port = port
         self._nick = nick
-
-        self._q = Queue()
-
-        self._calling_error = None
-        self._call_handler_thread = None
-        self._listen_thread = None
+        self._use_ssl = use_ssl
 
         self._handler = IRCHandler(
             {
@@ -80,12 +87,15 @@ class Shelp(IRCBase):
                 'nick': nick,
                 'channels': channels,
             })
-    
     def _connect(self):
         while 1:
             try:
                 self._sock = socket.socket()
+                if self._use_ssl:
+                    self._sock = ssl.wrap_socket(self._sock)
                 self._handler._sock = self._sock
+
+                print(self._addr, self._port)
 
                 self._sock.connect((self._addr, self._port))
 
@@ -93,14 +103,19 @@ class Shelp(IRCBase):
                 self._send('NICK '+self._nick)
                 print('Connected.')
                 break
-            except Exception as e:
+            except IOError as e:
                 if e[0] == socket.errno.ETIMEDOUT:
                     sleep(10)
                     print('Timeout, retrying...')
                 else:
                     raise
+            except TypeError as e:
+                raise e
 
     def start(self):
+        """
+        Start the bot.
+        """
         while 1:
             self._connect()
             self._calling_error = False
